@@ -1,0 +1,34 @@
+{
+	"samples" : [
+		{
+			"id" : "soil-sensor-touch",
+			"time" : "2022-07-13T20:40:21.001",
+			"value" : 404,
+			"units" : "undefined"
+		},
+		{
+			"id" : "soil-sensor-temp",
+			"time" : "2022-07-13T20:40:21.020",
+			"value" : 28.9459,
+			"units" : "celsius"
+		},
+		{
+			"id" : "soil-sensor-touch",
+			"time" : "2022-07-13T20:40:22.029",
+			"value" : 402,
+			"units" : "undefined"
+		},
+		{
+			"id" : "soil-sensor-temp",
+			"time" : "2022-07-13T20:40:22.120",
+			"value" : 28.6383,
+			"units" : "celsius"
+		},
+		{
+			"id" : "soil-sensor-temp",
+			"time" : "2022-07-13T20:40:23.108",
+			"value" : 29.1532,
+			"units" : "celsius"
+		}
+	]
+}
