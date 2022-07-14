@@ -1,3 +1,9 @@
+# editor workspace
+*.code-workspace
+
+# Mac OS .ds_store file @ any level
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
