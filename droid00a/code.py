@@ -59,24 +59,20 @@ print(db_tables)
 # Determine droid fk
 droid_fk = "1" # TODO
 
+import adafruit_pcf8523
+rtc = adafruit_pcf8523.PCF8523(busio.I2C(board.SCL, board.SDA))
 def upload(sensor_name, sensor_value):
     attempts = 3  # Number of attempts to retry each request
     failure_count = 0
     response = None
     
-    # Determine ts
-    #import datetime
-    #dt = datetime.datetime.now(datetime.timezone.utc)  
-    #utc_time = dt.replace(tzinfo=datetime.timezone.utc)
-    #utc_timestamp = utc_time.timestamp()
-    #print(utc_timestamp)
-
     # Upload a new sample
     json_data = \
     {
-      "time_ts": "2022-07-17 18:00:21.000000",
       "droid_fk": droid_fk
     }
+    t = rtc.datetime
+    json_data["time_ts"] = str(t.tm_year) + "-" + str(t.tm_mon).zfill(2) + "-" + str(t.tm_mday).zfill(2) + " " + str(t.tm_hour).zfill(2) + ":" + str(t.tm_min).zfill(2) + ":" + str(t.tm_sec) + ".0"
     json_data[sensor_name] = sensor_value
     print(json_data)
     SOIL_SENSOR = TABLES + "/" + "soil_" + sensor_name
@@ -98,9 +94,9 @@ def upload(sensor_name, sensor_value):
     response = None
 
 # Read and report sensor data, the return to sleep
-i2c_bus = board.I2C()
 from adafruit_seesaw.seesaw import Seesaw
-ss = Seesaw(i2c_bus, addr=0x36)
+import bitbangio
+ss = Seesaw(bitbangio.I2C(board.A1, board.A0), addr=0x36)
 import time
 while True:
     # read moisture level through capacitive touch pad
