@@ -1,3 +1,10 @@
+import neopixel
+import board
+pixel = neopixel.NeoPixel(board.NEOPIXEL, 1)
+pixel.brightness = 1.0
+LUMINANCE = 1
+pixel.fill((LUMINANCE, LUMINANCE, LUMINANCE))
+
 try:
     from secrets import secrets
 except ImportError:
@@ -6,7 +13,6 @@ except ImportError:
 print(secrets["name"] + " droid" + secrets["droid_id"])
 
 # Connect to AP
-import board
 from digitalio import DigitalInOut
 esp32_cs = DigitalInOut(board.D10)
 esp32_ready = DigitalInOut(board.D9)
@@ -30,6 +36,7 @@ while not esp.is_connected:
         continue
 print("Connected to", str(esp.ssid, "utf-8"), "\tRSSI:", esp.rssi)
 print("My IP address is", esp.pretty_ip(esp.ip_address))
+pixel.fill((0, 0, LUMINANCE))
 print("IP lookup sensordroid.dev: %s" % esp.pretty_ip(esp.get_host_by_name("www.sensordroid.dev")))
 print("Ping sensordroid.dev: %d ms" % esp.ping("www.sensordroid.dev"))
 
@@ -72,7 +79,7 @@ def upload(sensor_name, sensor_value):
       "droid_fk": droid_fk
     }
     t = rtc.datetime
-    json_data["time_ts"] = str(t.tm_year) + "-" + str(t.tm_mon).zfill(2) + "-" + str(t.tm_mday).zfill(2) + " " + str(t.tm_hour).zfill(2) + ":" + str(t.tm_min).zfill(2) + ":" + str(t.tm_sec) + ".0"
+    json_data["time_ts"] = str(t.tm_year) + "-" + str(t.tm_mon) + "-" + str(t.tm_mday) + " " + str(t.tm_hour) + ":" + str(t.tm_min) + ":" + str(t.tm_sec) + ".0"
     json_data[sensor_name] = sensor_value
     print(json_data)
     SOIL_SENSOR = TABLES + "/" + "soil_" + sensor_name
@@ -97,15 +104,24 @@ def upload(sensor_name, sensor_value):
 from adafruit_seesaw.seesaw import Seesaw
 import bitbangio
 ss = Seesaw(bitbangio.I2C(board.A1, board.A0), addr=0x36)
+
+pixel.fill((0, LUMINANCE, 0))
+
+# read moisture level through capacitive touch pad
+touch = ss.moisture_read()+ int(secrets["moisture"])
+upload("moisture", str(touch))
+
+# read temperature from the temperature sensor
+temp = ss.get_temp() + int(secrets["temp"])
+upload("temp", str(temp))
+
+# go into low-power state for some number of seconds
+pixel.fill((0, 0, 0))
+
+import alarm
 import time
-while True:
-    # read moisture level through capacitive touch pad
-    touch = ss.moisture_read()
-    upload("moisture", str(touch))
-
-    # read temperature from the temperature sensor
-    temp = ss.get_temp()
-    upload("temp", str(temp))
-
-    # wait some number of seconds
-    time.sleep(60*5)
+# Create a an alarm that will trigger after a specified timer elapses.
+time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + 60*5)
+# Exit the program, and then deep sleep until the alarm wakes us.
+alarm.exit_and_deep_sleep_until_alarms(time_alarm)
+# Does not return, so we never get here.
