@@ -2,9 +2,18 @@
 # If you put them in the code you risk committing that info or sharing it
 
 secrets = {
-    'name'     : 'BakerRoadPeppers01',
-    'droid_id' : '00b',
-    'timezone' : 'America/Los_Angeles', # http://worldtimeapi.org/timezones
-    'ssid'     : 'mySSID',
-    'password' : 'myPW'
+    'droid_fk'      : 1,
+    'droid_id'      : '00b',
+    'droid_purpose' : 'Periodic upload of greenhouse sensor data',
+    'soil_moisture' : 0.0,
+    'soil_temp'     : 0.0,
+    'uv'            : 0.0,
+    'humitity'      : 0.0,
+    'user_id'       : ['TBD', '...'],
+    'email'         : 'my_email',
+    'name'          : 'my_droid_name',
+    'timezone'      : 'my_timezone', # http://worldtimeapi.org/timezones
+    'ssid'          : 'my_ssid',
+    'password'      : 'my_password'
     }
+

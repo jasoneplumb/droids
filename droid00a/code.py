@@ -36,11 +36,6 @@ while not esp.is_connected:
 pixel.fill((0, 0, LUMINANCE)) # Connected: blue light
 print("Connected: ", str(esp.ssid, "utf-8"), "\tRSSI:", esp.rssi, "\tIP: ", esp.pretty_ip(esp.ip_address))
 
-# Determine droid fk
-droid_fk = "1" # TODO
-
-import adafruit_pcf8523
-rtc = adafruit_pcf8523.PCF8523(busio.I2C(board.SCL, board.SDA))
 def upload(sensor_name, sensor_value):
     TABLES = "https://vcgtjqigra.execute-api.us-west-2.amazonaws.com/proto/sensor_droid"
     attempts = 3  # Number of attempts to retry each request
@@ -50,10 +45,13 @@ def upload(sensor_name, sensor_value):
     # Upload a new sample
     json_data = \
     {
-      "droid_fk": droid_fk
+      "droid_fk": secrets['droid_fk']
     }
-    t = rtc.datetime
-    json_data["time_ts"] = str(t.tm_year) + "-" + str(t.tm_mon) + "-" + str(t.tm_mday) + " " + str(t.tm_hour) + ":" + str(t.tm_min) + ":" + str(t.tm_sec) + ".0"
+    res = requests.get('http://worldclockapi.com/api/json/utc/now')
+    json_data["time_ts"] = res.json()['currentDateTime']
+    res.close()
+    res = None
+    
     json_data[sensor_name] = sensor_value
     SOIL_SENSOR = TABLES + "/" + "soil_" + sensor_name
     print("PUTing data to {0}: {1}".format(SOIL_SENSOR, json_data))
@@ -76,11 +74,12 @@ def upload(sensor_name, sensor_value):
 # Read and report sensor data
 from adafruit_seesaw.seesaw import Seesaw
 import bitbangio
-ss = Seesaw(bitbangio.I2C(board.A1, board.A0), addr=0x36)
+i2c = bitbangio.I2C(board.A1, board.A0)
+ss = Seesaw(i2c, addr=0x36)
 
 # Read sensor values and add sensor bias
-touch = ss.moisture_read() + int(secrets["moisture"])
-temp = ss.get_temp() + int(secrets["temp"])
+touch = ss.moisture_read() + secrets["soil_moisture"]
+temp = ss.get_temp() + secrets["soil_temp"]
 
 pixel.fill((0, LUMINANCE, 0)) # Uploading: green light
 
@@ -95,3 +94,7 @@ time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + 60*5)
 pixel.fill((0, 0, 0)) # Completed: no light
 alarm.exit_and_deep_sleep_until_alarms(time_alarm)
 # Does not return. When the timer elapses, the program restarts.
+
+
+
+
