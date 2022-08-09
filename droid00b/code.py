@@ -4,15 +4,21 @@ import neopixel
 import board
 pixel = neopixel.NeoPixel(board.NEOPIXEL, 1)
 pixel.brightness = 1.0
-WHITE = (15, 15, 15)
+WHITE = (5, 5, 5)
 BLACK = (0, 0, 0)
-RED = (15, 0, 0)
-YELLOW = (15, 15, 0)
-GREEN = (0, 15, 0)
-CYAN = (0, 15, 15)
-BLUE = (0, 0, 15)
+RED = (5, 0, 0)
+YELLOW = (5, 5, 0)
+GREEN = (0, 5, 0)
+CYAN = (0, 5, 5)
+BLUE = (0, 0, 5)
 
-pixel.fill((8, 8, 8))
+import time
+def pixel_flash(color):
+    pixel.fill(color)
+    time.sleep(0.1)
+for v in range(0, 5, 1):
+    pixel_flash((v, v, v))
+    
 if False:
     import time
     import board
@@ -55,8 +61,12 @@ if soil_sensor_found:
     from adafruit_seesaw.seesaw import Seesaw 
     ss = Seesaw(i2c, addr=0x36) # soil moisture and temp
     # Read sensor values and add sensor bias
-    touch = ss.moisture_read() + secrets["soil_moisture"]
+    moisture = ss.moisture_read() + secrets["soil_moisture"]
     temp = ss.get_temp() + secrets["soil_temp"]
+from analogio import AnalogIn
+def get_voltage(pin):
+    return (pin.value * 3.3) / 65536
+uv_index = get_voltage(AnalogIn(board.A3)) * 10
 
 # Conneting to Access Point
 pixel.fill(BLUE)
@@ -88,7 +98,7 @@ if esp.rssi < -70:
 else:
     pixel.fill(GREEN)
 
-def upload(sensor_name, sensor_value):
+def upload(sensor_group_name, sensor_name, sensor_value):
     TABLES = "https://vcgtjqigra.execute-api.us-west-2.amazonaws.com/proto/sensor_droid"
     attempts = 3  # Number of attempts to retry each request
     failure_count = 0
@@ -105,11 +115,11 @@ def upload(sensor_name, sensor_value):
     res = None
     
     json_data[sensor_name] = sensor_value
-    SOIL_SENSOR = TABLES + "/" + "soil_" + sensor_name
-    print("PUTing data to {0}: {1}".format(SOIL_SENSOR, json_data))
+    TABLE = TABLES + "/" + sensor_group_name
+    print("PUTing data to {0}: {1}".format(TABLE, json_data))
     while not response:
         try:
-            response = requests.put(SOIL_SENSOR, json=json_data)
+            response = requests.put(TABLE, json=json_data)
             failure_count = 0
         except AssertionError as error:
             print("Upload failed, retrying...\n", error)
@@ -124,24 +134,15 @@ def upload(sensor_name, sensor_value):
     response = None
     
 # Uploading data
-success = True
+upload("uv", "uv_index", str(uv_index))
 if (soil_sensor_found):
-    upload("moisture", str(touch))
-    upload("temp", str(temp))
-else:
-    success = False
+    upload("soil_moisture", "moisture", str(moisture))
+    upload("soil_temp", "temp", str(temp))
 
-import time
-if success:
-    # Signal successful shutdown
-    def pixel_flash(color):
-        pixel.fill(color)
-        time.sleep(1)
-    for v in range(4, 0, -1):
-        pixel_flash((v, v, v))
-    pixel.deinit()
-else:
-    pixel.fill(RED)
+# Signal successful shutdown
+for v in range(5, 0, -1):
+    pixel_flash((v, v, v))
+pixel.deinit()
     
 # Create a an alarm that will trigger after a specified timer elapses.
 import alarm
