@@ -36,9 +36,9 @@ CREATE TABLE IF NOT EXISTS droids (
 CREATE TABLE IF NOT EXISTS soil_temp (
 	PRIMARY KEY (id),
     id					INT					NOT NULL AUTO_INCREMENT UNIQUE,
-    temp				FLOAT				NOT NULL,
-    droid_fk			INT					NOT NULL,
+    temp				FLOAT				NOT NULL, /* 3.1  temp values */
     time_ts				TIMESTAMP			NOT NULL,
+    droid_fk			INT					NOT NULL,
     FOREIGN KEY (droid_fk)
 		REFERENCES profiles(id)
         ON UPDATE CASCADE ON DELETE CASCADE
@@ -49,12 +49,22 @@ CREATE TABLE IF NOT EXISTS soil_moisture (
 	PRIMARY KEY (id),
     id					INT					NOT NULL AUTO_INCREMENT UNIQUE,
     moisture			FLOAT				NOT NULL,
-	droid_fk			INT					NOT NULL,
     time_ts				TIMESTAMP			NOT NULL,
+	droid_fk			INT					NOT NULL,
 	FOREIGN KEY (droid_fk)
 		REFERENCES profiles(id)
         ON UPDATE CASCADE ON DELETE CASCADE
+);
 
+CREATE TABLE IF NOT EXISTS uv (
+	PRIMARY KEY (id),
+    id					INT					NOT NULL AUTO_INCREMENT UNIQUE,
+    uv_index			FLOAT				NOT NULL,
+    time_ts				TIMESTAMP			NOT NULL,
+	droid_fk			INT					NOT NULL,
+	FOREIGN KEY (droid_fk)
+		REFERENCES profiles(id)
+        ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 /* one sample record per table for testing */
@@ -74,3 +84,12 @@ SELECT
 	*
 FROM
 	soil_moisture;
+    
+show tables;
+desc uv;
+select * from uv;
+
+insert into uv (uv_index, droid_fk, time_ts)
+values (12.0, 2, '2022-07-13T20:40:21.020');
+
+select * from droids;
