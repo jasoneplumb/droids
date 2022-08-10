@@ -12,3 +12,19 @@ GP0 -> (open)
 RXI -> (open)
 TXO -> (open)
 
+Soil Sensor -> RP2040 Feather
+Black -> GND
+Red -> 3.3V
+White -> A0 (w/ 10kOhm pull up)
+Green -> A1 (w/ 10kOhm pull up)
+
+UV Sensor -> RP2040 Feather
+- -> GND
+Out -> A3
++ -> 3.3V
+
+am2320 Sensor -> RP2040 Feather
+1 -> 3.3V
+2 -> 11 (w/ 10kOhm pull up)
+3 -> GND
+4 -> 12 (w/ 10kOhm pull up)
