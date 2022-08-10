@@ -32,37 +32,63 @@ CREATE TABLE IF NOT EXISTS droids (
         ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+/* one soil moisture reading */
+CREATE TABLE IF NOT EXISTS soil_moisture (
+	PRIMARY KEY (id),
+    id					INT					NOT NULL AUTO_INCREMENT UNIQUE,
+    soil_moisture		FLOAT				NOT NULL,
+	droid_fk			INT					NOT NULL,
+    time_ts				TIMESTAMP			NOT NULL,
+	FOREIGN KEY (droid_fk)
+		REFERENCES profiles(id)
+        ON UPDATE CASCADE ON DELETE CASCADE
+
+);
+
 /* one soil temp reading */
 CREATE TABLE IF NOT EXISTS soil_temp (
 	PRIMARY KEY (id),
     id					INT					NOT NULL AUTO_INCREMENT UNIQUE,
-    temp				FLOAT				NOT NULL, /* 3.1  temp values */
-    time_ts				TIMESTAMP			NOT NULL,
+    temp				FLOAT				NOT NULL,
     droid_fk			INT					NOT NULL,
+    time_ts				TIMESTAMP			NOT NULL,
     FOREIGN KEY (droid_fk)
 		REFERENCES profiles(id)
         ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-/* one soil moisture reading */
-CREATE TABLE IF NOT EXISTS soil_moisture (
-	PRIMARY KEY (id),
-    id					INT					NOT NULL AUTO_INCREMENT UNIQUE,
-    moisture			FLOAT				NOT NULL,
-    time_ts				TIMESTAMP			NOT NULL,
-	droid_fk			INT					NOT NULL,
-	FOREIGN KEY (droid_fk)
-		REFERENCES profiles(id)
-        ON UPDATE CASCADE ON DELETE CASCADE
-);
-
+/* one uv sensor reading */
 CREATE TABLE IF NOT EXISTS uv (
 	PRIMARY KEY (id),
     id					INT					NOT NULL AUTO_INCREMENT UNIQUE,
     uv_index			FLOAT				NOT NULL,
+    droid_fk			INT					NOT NULL,
     time_ts				TIMESTAMP			NOT NULL,
-	droid_fk			INT					NOT NULL,
-	FOREIGN KEY (droid_fk)
+    FOREIGN KEY (droid_fk)
+		REFERENCES profiles(id)
+        ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+/* one temperature sensor reading */
+CREATE TABLE IF NOT EXISTS temperature (
+	PRIMARY KEY (id),
+    id					INT					NOT NULL AUTO_INCREMENT UNIQUE,
+    temperature			FLOAT				NOT NULL,
+    droid_fk			INT					NOT NULL,
+    time_ts				TIMESTAMP			NOT NULL,
+    FOREIGN KEY (droid_fk)
+		REFERENCES profiles(id)
+        ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+/* one relative_humidity sensor reading */
+CREATE TABLE IF NOT EXISTS relative_humidity (
+	PRIMARY KEY (id),
+    id					INT					NOT NULL AUTO_INCREMENT UNIQUE,
+    relative_humidity	FLOAT				NOT NULL,
+    droid_fk			INT					NOT NULL,
+    time_ts				TIMESTAMP			NOT NULL,
+    FOREIGN KEY (droid_fk)
 		REFERENCES profiles(id)
         ON UPDATE CASCADE ON DELETE CASCADE
 );
@@ -72,7 +98,7 @@ INSERT INTO profiles (name, email, subject, userName, region, userPoolId)
 VALUES ('R2D2', 'r2d2@rebellion.com', '12345', '12345', 'tatooine', '12345');
 
 INSERT INTO droids (droid_id, name, creator_fk)
-VALUES ('12345', 'droid1', 1);
+VALUES ('0x00b', 'droid2', 2);
 
 INSERT INTO soil_temp (temp, time_ts, droid_fk)
 VALUES (28.9459, "2022-07-13T20:40:21.020", 1);
@@ -83,13 +109,4 @@ VALUES (28.9459, "2022-07-13T20:40:21.020", 1);
 SELECT
 	*
 FROM
-	soil_moisture;
-    
-show tables;
-desc uv;
-select * from uv;
-
-insert into uv (uv_index, droid_fk, time_ts)
-values (12.0, 2, '2022-07-13T20:40:21.020');
-
-select * from droids;
+	UV;

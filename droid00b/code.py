@@ -124,11 +124,11 @@ def upload(sensor_group_name, sensor_name, sensor_value):
     
 # Uploading data
 if (soil_sensor_found):
-    upload("soil_moisture", "moisture", str(soil_moisture))
+    upload("soil_moisture", "soil_moisture", str(soil_moisture))
     upload("soil_temp", "temp", str(soil_temperature))
 upload("uv", "uv_index", str(uv_index))
-#upload("am2320", "temperature", str(temperature))
-#upload("am2320", "relative_humidity", str(relative_humidity))
+upload("relative_humidity", "relative_humidity", str(relative_humidity))
+upload("temperature", "temperature", str(temperature))
 
 # Signal successful shutdown
 for v in range(5, 0, -1):
