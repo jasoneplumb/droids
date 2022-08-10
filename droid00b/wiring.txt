@@ -1,0 +1,14 @@
+AirLift -> RP2040 Feather
+VIN -> (open)
+3Vo -> 3.3V
+GND -> GND
+SCK -> SCK
+MISO -> MI
+MOSI -> MO
+CS -> 10
+BUSY -> 9
+RST -> 6
+GP0 -> (open)
+RXI -> (open)
+TXO -> (open)
+
