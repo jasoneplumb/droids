@@ -4,12 +4,9 @@ import neopixel
 import board
 pixel = neopixel.NeoPixel(board.NEOPIXEL, 1)
 pixel.brightness = 1.0
-WHITE = (5, 5, 5)
-BLACK = (0, 0, 0)
 RED = (5, 0, 0)
 YELLOW = (5, 5, 0)
 GREEN = (0, 5, 0)
-CYAN = (0, 5, 5)
 BLUE = (0, 0, 5)
 
 import time
@@ -18,57 +15,49 @@ def pixel_flash(color):
     time.sleep(0.1)
 for v in range(0, 5, 1):
     pixel_flash((v, v, v))
-    
-if False:
-    import time
-    import board
-
-    i2c = board.I2C()
-    # i2c = busio.I2C(board.SCL1, board.SDA1)  # QT Py RP2040 STEMMA connector
-    # i2c = busio.I2C(board.GP1, board.GP0)    # Pi Pico RP2040
-
-    while not i2c.try_lock():
-        pass
-    try:
-        while True:
-            print(
-                "I2C addresses found:",
-                [hex(device_address) for device_address in i2c.scan()],
-            )
-            time.sleep(2)
-    finally:  # unlock the i2c bus when ctrl-c'ing out of the loop
-        i2c.unlock()
-
+  
 try:
     from secrets import secrets
+    print(secrets["name"] + " (droid" + secrets["droid_id"] + ")")
 except ImportError:
-    print("WiFi secrets are kept in secrets.py, please add them there!")
+    print("Error: secrets.py not found!")
+    pixel.fill(RED) 
     raise
-print(secrets["name"] + " (droid" + secrets["droid_id"] + ")")
 
-# Read detected sensor data
+# Read sensor data
 import bitbangio
-i2c = bitbangio.I2C(board.A1, board.A0)
-i2c.try_lock()
+i2csoil = bitbangio.I2C(board.A1, board.A0)
+i2csoil.try_lock()
 soil_sensor_found = True
-i2cdevices = i2c.scan()
-#print(i2cdevices)
+i2cdevices = i2csoil.scan()
 if (len(i2cdevices) > 20):
     soil_sensor_found = False
-    print("Warning: soil sensors not found!")
-i2c.unlock()
+    print("Warning: soil_moisture and soil_temperature sensors not found!")
+i2csoil.unlock()
 if soil_sensor_found:
     from adafruit_seesaw.seesaw import Seesaw 
-    ss = Seesaw(i2c, addr=0x36) # soil moisture and temp
+    ss = Seesaw(i2csoil, addr=0x36)
     # Read sensor values and add sensor bias
-    moisture = ss.moisture_read() + secrets["soil_moisture"]
-    temp = ss.get_temp() + secrets["soil_temp"]
+    soil_moisture = ss.moisture_read() + secrets["soil_moisture"]
+    time.sleep(0.2) # sensors cannot be read back to back, need small delay
+    soil_temperature = ss.get_temp() + secrets["soil_temperature"]
+    print("soil_moisture: " + str(soil_moisture))
+    print("soil_temperature: " + str(soil_temperature))
+
 from analogio import AnalogIn
 def get_voltage(pin):
     return (pin.value * 3.3) / 65536
-uv_index = get_voltage(AnalogIn(board.A3)) * 10
+uv_index = (get_voltage(AnalogIn(board.A3)) * 10) + secrets["uv_index"]
+print("uv_index: " + str(uv_index))
 
-# Conneting to Access Point
+i2cam = bitbangio.I2C(board.D12, board.D11)
+import adafruit_am2320
+am = adafruit_am2320.AM2320(i2cam)
+relative_humidity = am.relative_humidity + secrets["relative_humidity"]
+time.sleep(0.2) # sensors cannot be read back to back, need small delay
+temperature = am.temperature + secrets["temperature"]
+print("relative_humidity: " + str(relative_humidity))
+print("temperature: " + str(temperature))
 pixel.fill(BLUE)
 from digitalio import DigitalInOut
 esp32_cs = DigitalInOut(board.D10)
@@ -134,10 +123,12 @@ def upload(sensor_group_name, sensor_name, sensor_value):
     response = None
     
 # Uploading data
-upload("uv", "uv_index", str(uv_index))
 if (soil_sensor_found):
-    upload("soil_moisture", "moisture", str(moisture))
-    upload("soil_temp", "temp", str(temp))
+    upload("soil_moisture", "moisture", str(soil_moisture))
+    upload("soil_temp", "temp", str(soil_temperature))
+upload("uv", "uv_index", str(uv_index))
+#upload("am2320", "temperature", str(temperature))
+#upload("am2320", "relative_humidity", str(relative_humidity))
 
 # Signal successful shutdown
 for v in range(5, 0, -1):
@@ -150,4 +141,5 @@ time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + 60*5)
 # Exit the program, and then deep sleep until the alarm wakes us.
 alarm.exit_and_deep_sleep_until_alarms(time_alarm)
 # Does not return. When the timer elapses, the program restarts.
+
 
