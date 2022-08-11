@@ -1,5 +1,5 @@
-/*DROP DATABASE sensor_droid; 
-*/
+DROP DATABASE sensor_droid; 
+
 
 CREATE DATABASE IF NOT EXISTS sensor_droid;
 USE sensor_droid;
@@ -46,10 +46,10 @@ CREATE TABLE IF NOT EXISTS soil_moisture (
 );
 
 /* one soil temp reading */
-CREATE TABLE IF NOT EXISTS soil_temp (
+CREATE TABLE IF NOT EXISTS soil_temperature (
 	PRIMARY KEY (id),
     id					INT					NOT NULL AUTO_INCREMENT UNIQUE,
-    temp				FLOAT				NOT NULL,
+    soil_temperature	FLOAT				NOT NULL,
     droid_fk			INT					NOT NULL,
     time_ts				TIMESTAMP			NOT NULL,
     FOREIGN KEY (droid_fk)
@@ -97,14 +97,14 @@ CREATE TABLE IF NOT EXISTS relative_humidity (
 INSERT INTO profiles (name, email, subject, userName, region, userPoolId)
 VALUES ('R2D2', 'r2d2@rebellion.com', '12345', '12345', 'tatooine', '12345');
 
+INSERT INTO profiles (name, email, subject, userName, region, userPoolId)
+VALUES ('R2D2', 'r2d2@rebellion.com', '12345', '12345', 'tatooine', '12345');
+
+INSERT INTO droids (droid_id, name, creator_fk)
+VALUES ('0x00b', 'droid1', 1);
+
 INSERT INTO droids (droid_id, name, creator_fk)
 VALUES ('0x00b', 'droid2', 2);
-
-INSERT INTO soil_temp (temp, time_ts, droid_fk)
-VALUES (28.9459, "2022-07-13T20:40:21.020", 1);
-
-INSERT INTO soil_moisture (moisture, time_ts, droid_fk)
-VALUES (28.9459, "2022-07-13T20:40:21.020", 1);
 
 SELECT
 	*

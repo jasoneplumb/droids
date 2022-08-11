@@ -99,7 +99,8 @@ def upload(sensor_group_name, sensor_name, sensor_value):
       "droid_fk": secrets['droid_fk']
     }
     res = requests.get('http://worldclockapi.com/api/json/utc/now')
-    json_data["time_ts"] = res.json()['currentDateTime']
+    json_data["time_ts"] = res.json()['currentDateTime'][:-1] # remove the Z from UTC
+    print(json_data["time_ts"])
     res.close()
     res = None
     
@@ -136,8 +137,10 @@ for v in range(5, 0, -1):
 pixel.deinit()
     
 # Create a an alarm that will trigger after a specified timer elapses.
+minutes = 5
+print('Restarting in ' + str(minutes) + ' minutes\nfrom a DEEP sleep :)')
 import alarm
-time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + 60*5)
+time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + 60*minutes)
 # Exit the program, and then deep sleep until the alarm wakes us.
 alarm.exit_and_deep_sleep_until_alarms(time_alarm)
 # Does not return. When the timer elapses, the program restarts.
