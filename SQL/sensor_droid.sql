@@ -93,6 +93,18 @@ CREATE TABLE IF NOT EXISTS relative_humidity (
         ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+/* one RSSI sensor reading */
+CREATE TABLE IF NOT EXISTS rssi (
+	PRIMARY KEY (id),
+    id					INT					NOT NULL AUTO_INCREMENT UNIQUE,
+    rssi				FLOAT				NOT NULL,
+    droid_fk			INT					NOT NULL,
+    time_ts				TIMESTAMP			NOT NULL,
+    FOREIGN KEY (droid_fk)
+		REFERENCES profiles(id)
+        ON UPDATE CASCADE ON DELETE CASCADE
+);
+
 /* one sample record per table for testing */
 INSERT INTO profiles (name, email, subject, userName, region, userPoolId)
 VALUES ('R2D2', 'r2d2@rebellion.com', '12345', '12345', 'tatooine', '12345');
