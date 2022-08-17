@@ -24,13 +24,13 @@ except ImportError:
     pixel.fill(RED) 
     raise
 
-# Read sensor data
+# read sensor data
 import bitbangio
 i2csoil = bitbangio.I2C(board.A1, board.A0)
 i2csoil.try_lock()
 soil_sensor_found = True
 i2cdevices = i2csoil.scan()
-if (len(i2cdevices) > 20):
+if (len(i2cdevices) == 0):
     soil_sensor_found = False
     print("Warning: soil_moisture and soil_temperature sensors not found!")
 i2csoil.unlock()
@@ -78,71 +78,87 @@ while not esp.is_connected:
     except OSError as e:
         print(".")
         continue
+print("ESP firmware: ", esp.firmware_version)
 print("Connected to ", str(esp.ssid, "utf-8"), ", ", esp.pretty_ip(esp.ip_address), "(RSSI is ", esp.rssi, ")")
 
-# Warn about low signal strength
+# warn about low signal strength
 if esp.rssi < -70:
     print("warning: Below minimum signal strength for reliable packet delivery")
     pixel.fill(YELLOW)
 else:
     pixel.fill(GREEN)
 
-def upload(sensor_group_name, sensor_name, sensor_value):
-    TABLES = "https://vcgtjqigra.execute-api.us-west-2.amazonaws.com/proto/sensor_droid"
-    attempts = 3  # Number of attempts to retry each request
-    failure_count = 0
-    response = None
-    
-    # Upload a new sample
-    json_data = \
-    {
-      "droid_fk": secrets['droid_fk']
-    }
-    res = requests.get('http://worldclockapi.com/api/json/utc/now')
-    json_data["time_ts"] = res.json()['currentDateTime'][:-1] # remove the Z from UTC
-    print(json_data["time_ts"])
-    res.close()
-    res = None
-    
-    json_data[sensor_name] = sensor_value
-    TABLE = TABLES + "/" + sensor_group_name
-    print("PUTing data to {0}: {1}".format(TABLE, json_data))
-    while not response:
-        try:
-            response = requests.put(TABLE, json=json_data)
-            failure_count = 0
-        except AssertionError as error:
-            print("Upload failed, retrying...\n", error)
-            failure_count += 1
-            if failure_count >= attempts:
-                raise AssertionError(
-                    "Failed to upload sensor data."
-                ) from error
-            continue
-    print(response.text)
-    response.close()
-    response = None
-    
-# Uploading data
-if (soil_sensor_found):
-    upload("soil_moisture", "soil_moisture", str(soil_moisture))
-    upload("soil_temp", "temp", str(soil_temperature))
-upload("uv", "uv_index", str(uv_index))
-upload("relative_humidity", "relative_humidity", str(relative_humidity))
-upload("temperature", "temperature", str(temperature))
+# get the time stamp (ts)
+ts = None
+ts_res = None
+while not ts_res:
+    try:
+        ts_res = requests.get('http://worldclockapi.com/api/json/utc/now')
+        failure_count = 0
+    except AssertionError as error:
+        print("Upload failed, retrying...\n", error)
+        failure_count += 1
+        if failure_count >= 3:
+            print("Failed to get UTC")
+            break
+        continue
+if ts_res:
+    ts = ts_res.json()['currentDateTime'][:-1]
+    ts_res.close()
+    ts_res = None
 
-# Signal successful shutdown
+if ts:
+    print('UTC is ' + ts)
+
+    def upload(sensor_group_name, sensor_name, sensor_value, ts):
+        TABLES = "https://vcgtjqigra.execute-api.us-west-2.amazonaws.com/proto/sensor_droid"
+        attempts = 3 
+        failure_count = 0
+        response = None
+        
+        # upload a new sample
+        json_data = \
+        {
+            "droid_fk": secrets['droid_fk'],
+            "time_ts": ts
+        }
+        json_data[sensor_name] = sensor_value
+        TABLE = TABLES + "/" + sensor_group_name
+        print("PUTing data to {0}: {1}".format(TABLE, json_data))
+        while not response:
+            try:
+                response = requests.put(TABLE, json=json_data)
+                failure_count = 0
+            except AssertionError as error:
+                print("Upload failed, retrying...\n", error)
+                failure_count += 1
+                if failure_count >= attempts:
+                    raise AssertionError(
+                        "Failed to upload sensor data."
+                    ) from error
+                continue
+        print(response.text)
+        response.close()
+        response = None
+        
+    # upload sensor data
+    if (soil_sensor_found):
+        upload("soil_moisture", "soil_moisture", str(soil_moisture), ts)
+        upload("soil_temp", "temp", str(soil_temperature), ts)
+    upload("uv", "uv_index", str(uv_index), ts)
+    upload("relative_humidity", "relative_humidity", str(relative_humidity), ts)
+    upload("temperature", "temperature", str(temperature), ts)
+    upload("rssi", "rssi", str(esp.rssi), ts)
+
+# shutdown
+esp.disconnect()
+print("Disconnected from", secrets['ssid'])
+minutes = 1
+print("Entering deep sleep for", minutes, "minutes before restarting")
 for v in range(5, 0, -1):
     pixel_flash((v, v, v))
 pixel.deinit()
-    
-# Create a an alarm that will trigger after a specified timer elapses.
-minutes = 5
-print('Restarting in ' + str(minutes) + ' minutes\nfrom a DEEP sleep :)')
 import alarm
 time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + 60*minutes)
-# Exit the program, and then deep sleep until the alarm wakes us.
-alarm.exit_and_deep_sleep_until_alarms(time_alarm)
-# Does not return. When the timer elapses, the program restarts.
-
-
+alarm.exit_and_deep_sleep_until_alarms(time_alarm) # DOES NOT RETURN
+# EOF
