@@ -9,6 +9,15 @@ YELLOW = (5, 5, 0)
 GREEN = (0, 5, 0)
 BLUE = (0, 0, 5)
 
+def deep_sleep(minutes):
+    print("Entering deep sleep for", minutes, "minutes before restarting")
+    for v in range(5, 0, -1):
+        pixel_flash((v, v, v))
+    pixel.deinit()
+    import alarm
+    time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + 60*minutes)
+    alarm.exit_and_deep_sleep_until_alarms(time_alarm) # DOES NOT RETURN
+
 import time
 def pixel_flash(color):
     pixel.fill(color)
@@ -70,12 +79,17 @@ esp = adafruit_esp32spi.ESP_SPIcontrol(spi, esp32_cs, esp32_ready, esp32_reset)
 import adafruit_esp32spi.adafruit_esp32spi_socket as socket
 import adafruit_requests as requests
 requests.set_socket(socket, esp)
+failure_count = 0
 while not esp.status == adafruit_esp32spi.WL_IDLE_STATUS:
     continue
 while not esp.is_connected:
     try:
         esp.connect_AP(secrets["ssid"], secrets["password"])
-    except OSError as e:
+    except Exception as error:
+        failure_count += 1
+        if failure_count >= 3:
+            print("Failed to get connect (" + error + ")")
+            deep_sleep(10)
         print(".")
         continue
 print("ESP firmware: ", esp.firmware_version)
@@ -91,74 +105,62 @@ else:
 # get the time stamp (ts)
 ts = None
 ts_res = None
+failure_count = 0
 while not ts_res:
     try:
         ts_res = requests.get('http://worldclockapi.com/api/json/utc/now')
-        failure_count = 0
-    except AssertionError as error:
-        print("Upload failed, retrying...\n", error)
+    except Exception as error:
+        print(".")
         failure_count += 1
         if failure_count >= 3:
-            print("Failed to get UTC")
-            break
+            print("Failed to get UTC (" + error + ")")
+            deep_sleep(10)
+        sleep(5)
         continue
-if ts_res:
-    ts = ts_res.json()['currentDateTime'][:-1]
-    ts_res.close()
-    ts_res = None
+ts = ts_res.json()['currentDateTime'][:-1]
+ts_res.close()
+ts_res = None
 
-if ts:
-    print('UTC is ' + ts)
+print('UTC is ' + ts)
 
-    def upload(sensor_group_name, sensor_name, sensor_value, ts):
-        TABLES = "https://vcgtjqigra.execute-api.us-west-2.amazonaws.com/proto/sensor_droid"
-        attempts = 3 
-        failure_count = 0
-        response = None
-        
-        # upload a new sample
-        json_data = \
-        {
-            "droid_fk": secrets['droid_fk'],
-            "time_ts": ts
-        }
-        json_data[sensor_name] = sensor_value
-        TABLE = TABLES + "/" + sensor_group_name
-        print("PUTing data to {0}: {1}".format(TABLE, json_data))
-        while not response:
-            try:
-                response = requests.put(TABLE, json=json_data)
-                failure_count = 0
-            except AssertionError as error:
-                print("Upload failed, retrying...\n", error)
-                failure_count += 1
-                if failure_count >= attempts:
-                    raise AssertionError(
-                        "Failed to upload sensor data."
-                    ) from error
-                continue
-        print(response.text)
-        response.close()
-        response = None
-        
-    # upload sensor data
-    if (soil_sensor_found):
-        upload("soil_moisture", "soil_moisture", str(soil_moisture), ts)
-        upload("soil_temp", "temp", str(soil_temperature), ts)
-    upload("uv", "uv_index", str(uv_index), ts)
-    upload("relative_humidity", "relative_humidity", str(relative_humidity), ts)
-    upload("temperature", "temperature", str(temperature), ts)
-    upload("rssi", "rssi", str(esp.rssi), ts)
+def upload(sensor_group_name, sensor_name, sensor_value, ts):
+    # upload a new sample
+    json_data = \
+    {
+        "droid_fk": secrets['droid_fk'],
+        "time_ts": ts
+    }
+    json_data[sensor_name] = sensor_value
+    TABLES = "https://vcgtjqigra.execute-api.us-west-2.amazonaws.com/proto/sensor_droid"
+    TABLE = TABLES + "/" + sensor_group_name
+    print("PUTing data to {0}: {1}".format(TABLE, json_data))
+    failure_count = 0
+    response = None
+    while not response:
+        try:
+            response = requests.put(TABLE, json=json_data)
+        except Exception as error:
+            print(".")
+            failure_count += 1
+            if failure_count >= 3:
+                print("Failed to upload sensor data (" + error + ")")
+                deep_sleep(10)
+            continue
+    print(response.text)
+    response.close()
+    response = None
+    
+# upload sensor data
+if (soil_sensor_found):
+    upload("soil_moisture", "soil_moisture", str(soil_moisture), ts)
+    upload("soil_temp", "temp", str(soil_temperature), ts)
+upload("uv", "uv_index", str(uv_index), ts)
+upload("relative_humidity", "relative_humidity", str(relative_humidity), ts)
+upload("temperature", "temperature", str(temperature), ts)
+upload("rssi", "rssi", str(esp.rssi), ts)
 
 # shutdown
 esp.disconnect()
 print("Disconnected from", secrets['ssid'])
-minutes = 1
-print("Entering deep sleep for", minutes, "minutes before restarting")
-for v in range(5, 0, -1):
-    pixel_flash((v, v, v))
-pixel.deinit()
-import alarm
-time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + 60*minutes)
-alarm.exit_and_deep_sleep_until_alarms(time_alarm) # DOES NOT RETURN
+deep_sleep(1)
 # EOF
