@@ -62,6 +62,7 @@ print("uv_index: " + str(uv_index))
 i2cam = bitbangio.I2C(board.D12, board.D11)
 import adafruit_am2320
 am = adafruit_am2320.AM2320(i2cam)
+time.sleep(0.2) # sensors cannot be read right away, need small delay
 relative_humidity = am.relative_humidity + secrets["relative_humidity"]
 time.sleep(0.2) # sensors cannot be read back to back, need small delay
 temperature = am.temperature + secrets["temperature"]
@@ -115,7 +116,7 @@ while not ts_res:
         if failure_count >= 3:
             print("Failed to get UTC (" + error + ")")
             deep_sleep(10)
-        sleep(5)
+        time.sleep(5)
         continue
 ts = ts_res.json()['currentDateTime'][:-1]
 ts_res.close()
