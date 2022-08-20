@@ -59,15 +59,26 @@ def get_voltage(pin):
 uv_index = (get_voltage(AnalogIn(board.A3)) * 10) + secrets["uv_index"]
 print("uv_index: " + str(uv_index))
 
-i2cam = bitbangio.I2C(board.D12, board.D11)
-import adafruit_am2320
-am = adafruit_am2320.AM2320(i2cam)
-time.sleep(0.2) # sensors cannot be read right away, need small delay
-relative_humidity = am.relative_humidity + secrets["relative_humidity"]
-time.sleep(0.2) # sensors cannot be read back to back, need small delay
-temperature = am.temperature + secrets["temperature"]
-print("relative_humidity: " + str(relative_humidity))
-print("temperature: " + str(temperature))
+# import adafruit_am2320
+# failure_count = 0
+# success = False
+# while not success:
+#     try:
+#         i2cam = bitbangio.I2C(board.D12, board.D11)
+#         am = adafruit_am2320.AM2320(i2cam)
+#         relative_humidity = am.relative_humidity + secrets["relative_humidity"]
+#         temperature = am.temperature + secrets["temperature"]
+#         success = True
+#     except Exception as error:
+#         failure_count += 1
+#         if failure_count >= 3:
+#             print("Failed to read am2320 (" + str(error) + ")")
+#             deep_sleep(5)
+#         print(".")
+#         time.sleep(3)
+#         continue
+# print("relative_humidity: " + str(relative_humidity))
+# print("temperature: " + str(temperature))
 pixel.fill(BLUE)
 from digitalio import DigitalInOut
 esp32_cs = DigitalInOut(board.D10)
@@ -89,9 +100,10 @@ while not esp.is_connected:
     except Exception as error:
         failure_count += 1
         if failure_count >= 3:
-            print("Failed to get connect (" + error + ")")
-            deep_sleep(10)
-        print(".")
+            print("Error: Failed to get connect (" + str(error) + ")")
+            deep_sleep(1)
+        time.sleep(5)
+        print("Warning: Retrying AP connection!")
         continue
 print("ESP firmware: ", esp.firmware_version)
 print("Connected to ", str(esp.ssid, "utf-8"), ", ", esp.pretty_ip(esp.ip_address), "(RSSI is ", esp.rssi, ")")
@@ -114,8 +126,9 @@ while not ts_res:
         print(".")
         failure_count += 1
         if failure_count >= 3:
-            print("Failed to get UTC (" + error + ")")
-            deep_sleep(10)
+            print("Failed to get UTC (" + str(error) + ")")
+            deep_sleep(1)
+        print("Warning: Retrying UTC request!")
         time.sleep(5)
         continue
 ts = ts_res.json()['currentDateTime'][:-1]
@@ -144,8 +157,10 @@ def upload(sensor_group_name, sensor_name, sensor_value, ts):
             print(".")
             failure_count += 1
             if failure_count >= 3:
-                print("Failed to upload sensor data (" + error + ")")
-                deep_sleep(10)
+                print("Failed to upload sensor data (" + str(error) + ")")
+                deep_sleep(1)
+            print("Warning: Retrying data upload!")
+            time.sleep(5)
             continue
     print(response.text)
     response.close()
@@ -156,8 +171,8 @@ if (soil_sensor_found):
     upload("soil_moisture", "soil_moisture", str(soil_moisture), ts)
     upload("soil_temp", "temp", str(soil_temperature), ts)
 upload("uv", "uv_index", str(uv_index), ts)
-upload("relative_humidity", "relative_humidity", str(relative_humidity), ts)
-upload("temperature", "temperature", str(temperature), ts)
+#upload("relative_humidity", "relative_humidity", str(relative_humidity), ts)
+#upload("temperature", "temperature", str(temperature), ts)
 upload("rssi", "rssi", str(esp.rssi), ts)
 
 # shutdown
