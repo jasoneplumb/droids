@@ -59,26 +59,31 @@ def get_voltage(pin):
 uv_index = (get_voltage(AnalogIn(board.A3)) * 10) + secrets["uv_index"]
 print("uv_index: " + str(uv_index))
 
-# import adafruit_am2320
-# failure_count = 0
-# success = False
-# while not success:
-#     try:
-#         i2cam = bitbangio.I2C(board.D12, board.D11)
-#         am = adafruit_am2320.AM2320(i2cam)
-#         relative_humidity = am.relative_humidity + secrets["relative_humidity"]
-#         temperature = am.temperature + secrets["temperature"]
-#         success = True
-#     except Exception as error:
-#         failure_count += 1
-#         if failure_count >= 3:
-#             print("Failed to read am2320 (" + str(error) + ")")
-#             deep_sleep(5)
-#         print(".")
-#         time.sleep(3)
-#         continue
-# print("relative_humidity: " + str(relative_humidity))
-# print("temperature: " + str(temperature))
+relative_humidity = None
+temperature = None
+import adafruit_am2320
+failure_count = 0
+success = False
+while not success:
+   try:
+       i2cam = bitbangio.I2C(board.D12, board.D11)
+       print(i2cam)
+       am = adafruit_am2320.AM2320(i2cam)
+       print(am)
+       relative_humidity = am.relative_humidity + secrets["relative_humidity"]
+       temperature = am.temperature + secrets["temperature"]
+       success = True
+   except Exception as error:
+       failure_count += 1
+       if failure_count >= 3:
+           print("Failed to read am2320 (" + str(error) + ")")
+           break
+       print(".")
+       time.sleep(5)
+       continue
+if (relative_humidity != None): print("relative_humidity: " + str(relative_humidity))
+if (temperature != None): print("temperature: " + str(temperature))
+
 pixel.fill(BLUE)
 from digitalio import DigitalInOut
 esp32_cs = DigitalInOut(board.D10)
@@ -167,13 +172,13 @@ def upload(sensor_group_name, sensor_name, sensor_value, ts):
     response = None
     
 # upload sensor data
-if (soil_sensor_found):
-    upload("soil_moisture", "soil_moisture", str(soil_moisture), ts)
-    upload("soil_temp", "temp", str(soil_temperature), ts)
-upload("uv", "uv_index", str(uv_index), ts)
-#upload("relative_humidity", "relative_humidity", str(relative_humidity), ts)
-#upload("temperature", "temperature", str(temperature), ts)
 upload("rssi", "rssi", str(esp.rssi), ts)
+upload("uv", "uv_index", str(uv_index), ts)
+if (relative_humidity != None): upload("relative_humidity", "relative_humidity", str(relative_humidity), ts)
+if (temperature != None): upload("temperature", "temperature", str(temperature), ts)
+if (soil_sensor_found):
+    upload("soil_temp", "temp", str(soil_temperature), ts)
+    upload("soil_moisture", "soil_moisture", str(soil_moisture), ts)
 
 # shutdown
 esp.disconnect()
