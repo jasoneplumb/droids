@@ -2,9 +2,9 @@
 # If you put them in the code you risk committing that info or sharing it
 
 secrets = {
-    'name'              : 'myName',
-    'droid_fk'          : 1,
-    'droid_id'          : '00b',
+    'droid_name'        : 'myDroidName',
+    'droid_fk'          : ?,
+    'droid_id'          : '???',
     'droid_purpose'     : 'What this device does, and for what purpose',
     'soil_moisture'     : 0.0,
     'soil_temperature'  : 0.0,
