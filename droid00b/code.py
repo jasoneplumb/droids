@@ -1,44 +1,49 @@
 # droid00b: periodic upload of local greenhouse sensor data
+# TODO test new barometer
+# TODO factor out, as a function, the multi-pass try/catch pattern
+# TODO factor out, as a file, each sensor's logic
+# TODO Add support for sensor specific sampling frequencies
+MINUTES_BETWEEN_SAMPLES = 1
 
-import neopixel
+# Indicate that we are starting up   
 import board
-pixel = neopixel.NeoPixel(board.NEOPIXEL, 1)
-pixel.brightness = 1.0
-RED = (5, 0, 0)
-YELLOW = (5, 5, 0)
-GREEN = (0, 5, 0)
-BLUE = (0, 0, 5)
+import neopixel
+import time
+neopixel = neopixel.NeoPixel(board.NEOPIXEL, 1)
+neopixel.brightness = 1.0
+for v in range(0, 5, 1):
+    neopixel.fill((v, v, v))
+    time.sleep(0.1)
 
-def deep_sleep(minutes):
+# Enter a low power state for the specified number of minutes,
+# before restarting the device (program).
+def deep_sleep_then_restart(minutes):
     print("Entering deep sleep for", minutes, "minutes before restarting")
     for v in range(5, 0, -1):
-        pixel_flash((v, v, v))
-    pixel.deinit()
+        neopixel.fill((v, v, v))
+        time.sleep(0.1)
+    neopixel.deinit()
     import alarm
     time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + 60*minutes)
     alarm.exit_and_deep_sleep_until_alarms(time_alarm) # DOES NOT RETURN
 
-import time
-def pixel_flash(color):
-    pixel.fill(color)
-    time.sleep(0.1)
-for v in range(0, 5, 1):
-    pixel_flash((v, v, v))
-  
+# Ensure that the secrets file is valid
 try:
     from secrets import secrets
     print(secrets["name"] + " (droid" + secrets["droid_id"] + ")")
 except ImportError:
     print("Error: secrets.py not found!")
-    pixel.fill(RED) 
+    RED = (5, 0, 0)
+    neopixel.fill(RED) 
     raise
 
-# read sensor data
+# Read sensors
 import bitbangio
 i2csoil = bitbangio.I2C(board.A1, board.A0)
 i2csoil.try_lock()
 soil_sensor_found = True
 i2cdevices = i2csoil.scan()
+print(i2cdevices)
 if (len(i2cdevices) == 0):
     soil_sensor_found = False
     print("Warning: soil_moisture and soil_temperature sensors not found!")
@@ -84,7 +89,9 @@ while not success:
 if (relative_humidity != None): print("relative_humidity: " + str(relative_humidity))
 if (temperature != None): print("temperature: " + str(temperature))
 
-pixel.fill(BLUE)
+# Attach to the network
+BLUE = (0, 0, 5)
+neopixel.fill(BLUE)
 from digitalio import DigitalInOut
 esp32_cs = DigitalInOut(board.D10)
 esp32_ready = DigitalInOut(board.D9)
@@ -106,41 +113,40 @@ while not esp.is_connected:
         failure_count += 1
         if failure_count >= 3:
             print("Error: Failed to get connect (" + str(error) + ")")
-            deep_sleep(1)
+            deep_sleep_then_restart(MINUTES_BETWEEN_SAMPLES)
         time.sleep(5)
         print("Warning: Retrying AP connection!")
         continue
 print("ESP firmware: ", esp.firmware_version)
 print("Connected to ", str(esp.ssid, "utf-8"), ", ", esp.pretty_ip(esp.ip_address), "(RSSI is ", esp.rssi, ")")
-
-# warn about low signal strength
 if esp.rssi < -70:
     print("warning: Below minimum signal strength for reliable packet delivery")
-    pixel.fill(YELLOW)
+    YELLOW = (5, 5, 0)
+    neopixel.fill(YELLOW)
 else:
-    pixel.fill(GREEN)
+    GREEN = (0, 5, 0)
+    neopixel.fill(GREEN)
 
-# get the time stamp (ts)
-ts = None
-ts_res = None
+# Compose the JSON data object to upload
+UTC = None
+UTC_response = None
 failure_count = 0
-while not ts_res:
+while not UTC_response:
     try:
-        ts_res = requests.get('http://worldclockapi.com/api/json/utc/now')
+        UTC_response = requests.get('http://worldclockapi.com/api/json/utc/now')
     except Exception as error:
         print(".")
         failure_count += 1
         if failure_count >= 3:
             print("Failed to get UTC (" + str(error) + ")")
-            deep_sleep(1)
+            deep_sleep_then_restart(MINUTES_BETWEEN_SAMPLES)
         print("Warning: Retrying UTC request!")
         time.sleep(5)
         continue
-ts = ts_res.json()['currentDateTime'][:-1]
-ts_res.close()
-ts_res = None
-
-print('UTC is ' + ts)
+UTC = UTC_response.json()['currentDateTime'][:-1] # Removes the trailing 'Z'
+UTC_response.close()
+UTC_response = None
+print('UTC is ' + UTC)
 
 def upload(sensor_group_name, sensor_name, sensor_value, ts):
     # upload a new sample
@@ -152,7 +158,7 @@ def upload(sensor_group_name, sensor_name, sensor_value, ts):
     json_data[sensor_name] = sensor_value
     TABLES = "https://vcgtjqigra.execute-api.us-west-2.amazonaws.com/proto/sensor_droid"
     TABLE = TABLES + "/" + sensor_group_name
-    print("PUTing data to {0}: {1}".format(TABLE, json_data))
+    print(f"PUTing data to {TABLE} {json_data}")
     failure_count = 0
     response = None
     while not response:
@@ -163,7 +169,7 @@ def upload(sensor_group_name, sensor_name, sensor_value, ts):
             failure_count += 1
             if failure_count >= 3:
                 print("Failed to upload sensor data (" + str(error) + ")")
-                deep_sleep(1)
+                deep_sleep_then_restart(MINUTES_BETWEEN_SAMPLES)
             print("Warning: Retrying data upload!")
             time.sleep(5)
             continue
@@ -172,16 +178,15 @@ def upload(sensor_group_name, sensor_name, sensor_value, ts):
     response = None
     
 # upload sensor data
-upload("rssi", "rssi", str(esp.rssi), ts)
-upload("uv", "uv_index", str(uv_index), ts)
-if (relative_humidity != None): upload("relative_humidity", "relative_humidity", str(relative_humidity), ts)
-if (temperature != None): upload("temperature", "temperature", str(temperature), ts)
+upload("rssi", "rssi", str(esp.rssi), UTC)
+upload("uv", "uv_index", str(uv_index), UTC)
+if (relative_humidity != None): upload("relative_humidity", "relative_humidity", str(relative_humidity), UTC)
+if (temperature != None): upload("temperature", "temperature", str(temperature), UTC)
 if (soil_sensor_found):
-    upload("soil_temp", "temp", str(soil_temperature), ts)
-    upload("soil_moisture", "soil_moisture", str(soil_moisture), ts)
+    upload("soil_temp", "temp", str(soil_temperature), UTC)
+    upload("soil_moisture", "soil_moisture", str(soil_moisture), UTC)
 
 # shutdown
 esp.disconnect()
 print("Disconnected from", secrets['ssid'])
-deep_sleep(1)
-# EOF
+deep_sleep_then_restart(MINUTES_BETWEEN_SAMPLES)
