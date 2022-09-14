@@ -16,6 +16,7 @@ def Reading():
                     print("Failed to read bme280 (" + str(error) + ")")
                     break
                 print(".")
+                import time
                 time.sleep(5)
                 continue
     else:
@@ -36,6 +37,7 @@ def Reading():
                     print("Failed to read am2320 (" + str(error) + ")")
                     break
                 print(".")
+                import time
                 time.sleep(5)
                 continue
         i2c.deinit()

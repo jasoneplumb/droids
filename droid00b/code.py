@@ -62,39 +62,14 @@
 #     }
 # }
 
-# Indicate that we are starting up
+import rp2040
+rp2040.startup()
 import board
 import neopixel
-import time
-neopixel = neopixel.NeoPixel(board.NEOPIXEL, 1)
-neopixel.brightness = 1.0
-for v in range(0, 5, 1):
-    neopixel.fill((v, v, v))
-    time.sleep(0.1)
-
-# Enter a low power state for the specified number of minutes,
-# before restarting the device (program).
-def deep_sleep_then_restart(minutes):
-    print("Entering deep sleep for", minutes, "minutes before restarting")
-    for v in range(5, 0, -1):
-        neopixel.fill((v, v, v))
-        time.sleep(0.1)
-    neopixel.deinit()
-    import alarm
-    time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + 60*minutes)
-    alarm.exit_and_deep_sleep_until_alarms(time_alarm) # DOES NOT RETURN
-
-# Ensure that the secrets file is valid
-try:
-    from secrets import secrets
-    print(secrets['droid_name'] + " (droid" + secrets['droid_id'] + ")")
-except ImportError:
-    print("Error: secrets.py not found!")
-    RED = (5, 0, 0)
-    neopixel.fill(RED) 
-    raise
-
-# Read sensors
+np = neopixel.NeoPixel(board.NEOPIXEL, 1)
+np.brightness = 1.0
+WHITE = (5, 5, 5)
+np.fill(WHITE)
 import soil_moisture
 sm = soil_moisture.Reading()
 if (sm != None): print('soil_moisture is '+ str(sm) + ' (' + soil_moisture.Units() + ')')
@@ -110,107 +85,84 @@ if (rh != None): print('relative_humidity is '+ str(rh) + ' (' + relative_humidi
 import temperature
 t = temperature.Reading()
 if (t != None): print('temperature is '+ str(t) + ' (' + temperature.Units() + ')')
+np.deinit()
 
-# Attach to the network
+# Connect to the network
 MINUTES_BETWEEN_RETRIES = 1
-BLUE = (0, 0, 5)
-neopixel.fill(BLUE)
-from digitalio import DigitalInOut
-esp32_cs = DigitalInOut(board.D10)
-esp32_ready = DigitalInOut(board.D9)
-esp32_reset = DigitalInOut(board.D6)
-from adafruit_esp32spi import adafruit_esp32spi
-import busio
-spi = busio.SPI(board.SCK, board.MOSI, board.MISO)
-esp = adafruit_esp32spi.ESP_SPIcontrol(spi, esp32_cs, esp32_ready, esp32_reset)
-import adafruit_esp32spi.adafruit_esp32spi_socket as socket
-import adafruit_requests as requests
-requests.set_socket(socket, esp)
-failure_count = 0
-while not esp.status == adafruit_esp32spi.WL_IDLE_STATUS:
-    continue
-while not esp.is_connected:
-    try:
-        esp.connect_AP(secrets['ssid'], secrets['password'])
-    except Exception as error:
-        failure_count += 1
-        if failure_count >= 3:
-            print("Error: Failed to get connect (" + str(error) + ")")
-            deep_sleep_then_restart(MINUTES_BETWEEN_RETRIES)
-        print(".")
-        time.sleep(5)
-        continue
-print("ESP firmware: ", esp.firmware_version)
-print("Connected to ", str(esp.ssid, "utf-8"), ", ", esp.pretty_ip(esp.ip_address), "(RSSI is ", esp.rssi, ")")
-if esp.rssi < -70:
-    print("warning: Below minimum signal strength for reliable packet delivery")
+import airlift
+esp = airlift.Esp()
+if (esp != None):
+    import adafruit_esp32spi.adafruit_esp32spi_socket as socket
+    import adafruit_requests as requests
+    requests.set_socket(socket, esp)
+    def upload(sensor_group_name, sensor_name, sensor_value, ts):
+        if (sensor_value == None):
+            return
+        # upload a new sample
+        from secrets import secrets    
+        json_data = \
+        {
+            "droid_fk": secrets['droid_fk'],
+            "time_ts": ts
+        }
+        json_data[sensor_name] = str(sensor_value)
+        TABLES = "https://vcgtjqigra.execute-api.us-west-2.amazonaws.com/proto/sensor_droid"
+        TABLE = TABLES + "/" + sensor_group_name
+        print(f"PUTing data to {TABLE} {json_data}")
+        failure_count = 0
+        response = None
+        while not response:
+            try:
+                response = requests.put(TABLE, json=json_data)
+            except Exception as error:
+                print(".")
+                failure_count += 1
+                if failure_count >= 3:
+                    print("Failed to upload sensor data (" + str(error) + ")")
+                    rp2040.restart(MINUTES_BETWEEN_RETRIES)
+                print("Warning: Retrying data upload!")
+                import time
+                time.sleep(5)
+                continue
+        print(response.text)
+        response.close()
+        response = None
+        failure_count = 0
+    
+    np = neopixel.NeoPixel(board.NEOPIXEL, 1)
+    np.brightness = 1.0
     YELLOW = (5, 5, 0)
-    neopixel.fill(YELLOW)
-else:
-    GREEN = (0, 5, 0)
-    neopixel.fill(GREEN)
-
-# Compose the JSON data object to upload
-UTC = None
-UTC_response = None
-failure_count = 0
-while not UTC_response:
-    try:
-        UTC_response = requests.get('http://worldclockapi.com/api/json/utc/now')
-    except Exception as error:
-        print(".")
-        failure_count += 1
-        if failure_count >= 3:
-            print("Failed to get UTC (" + str(error) + ")")
-            deep_sleep_then_restart(MINUTES_BETWEEN_RETRIES)
-        print("Warning: Retrying UTC request!")
-        time.sleep(5)
-        continue
-UTC = UTC_response.json()['currentDateTime'][:-1] # Removes the trailing 'Z'
-UTC_response.close()
-UTC_response = None
-print('UTC is ' + UTC)
-
-def upload(sensor_group_name, sensor_name, sensor_value, ts):
-    if (sensor_value == None):
-        return
-    # upload a new sample
-    json_data = \
-    {
-        "droid_fk": secrets['droid_fk'],
-        "time_ts": UTC
-    }
-    json_data[sensor_name] = str(sensor_value)
-    TABLES = "https://vcgtjqigra.execute-api.us-west-2.amazonaws.com/proto/sensor_droid"
-    TABLE = TABLES + "/" + sensor_group_name
-    print(f"PUTing data to {TABLE} {json_data}")
+    np.fill(YELLOW)
     failure_count = 0
-    response = None
-    while not response:
+    UTC_response = None
+    while not UTC_response:
         try:
-            response = requests.put(TABLE, json=json_data)
+            UTC_response = requests.get('http://worldclockapi.com/api/json/utc/now')
         except Exception as error:
             print(".")
             failure_count += 1
             if failure_count >= 3:
-                print("Failed to upload sensor data (" + str(error) + ")")
-                deep_sleep_then_restart(MINUTES_BETWEEN_RETRIES)
-            print("Warning: Retrying data upload!")
+                print("Failed to get UTC (" + str(error) + ")")
+                rp2040.restart(MINUTES_BETWEEN_RETRIES)
+            print("Warning: Retrying UTC request!")
+            import time
             time.sleep(5)
             continue
-    print(response.text)
-    response.close()
-    response = None
-    
-# upload sensor data
-upload("rssi", "rssi", esp.rssi, UTC)
-upload("soil_moisture", "soil_moisture", sm, UTC)
-upload("soil_temperature", "soil_temperature", st, UTC)
-upload("uv", "uv_index", uv, UTC)
-upload("relative_humidity", "relative_humidity", rh, UTC)
-upload("temperature", "temperature", t, UTC)
+    UTC = UTC_response.json()['currentDateTime'][:-1] # Removes the trailing 'Z'
+    UTC_response.close()
+    UTC_response = None
+    np.deinit()
 
-# shutdown
-esp.disconnect()
-print("Disconnected from", secrets['ssid'])
-deep_sleep_then_restart(MINUTES_BETWEEN_RETRIES)
+    np = neopixel.NeoPixel(board.NEOPIXEL, 1)
+    np.brightness = 1.0
+    GREEN = (0, 5, 0)
+    np.fill(GREEN)
+    upload("rssi", "rssi", esp.rssi, UTC)
+    upload("soil_moisture", "soil_moisture", sm, UTC)
+    upload("soil_temperature", "soil_temperature", st, UTC)
+    upload("uv", "uv_index", uv, UTC)
+    upload("relative_humidity", "relative_humidity", rh, UTC)
+    upload("temperature", "temperature", t, UTC)
+    esp.disconnect()
+    np.deinit()
+rp2040.restart(MINUTES_BETWEEN_RETRIES)
