@@ -44,4 +44,4 @@ def Reading():
     return result
 
 def Units():
-    return 'Percentage'
+    return 'percentage'
