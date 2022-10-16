@@ -2,66 +2,6 @@
 # TODO factor out, as a function, the multi-pass try/catch pattern
 # TODO Add support for sensor specific sampling frequencies
 
-# droid00b = {
-#     'description': {
-#         'sensors': [{
-#             'pretty_name': 'Relative Humidity', 
-#             'endpoint': 'proto/sensor_droid/relative_humidity', 
-#             'reading_column_name': 'relative_humidity',
-#             'reading_units': 'percentage', 
-#             'period': '3', 
-#             'period_units': 'hours',
-#             'precision': '0.1', 
-#             'accuracy': '0.01'
-#         }, {
-#             'pretty_name': 'Wi-Fi Signal Strength', 
-#             'endpoint': 'proto/sensor_droid/rssi', 
-#             'reading_column_name': 'rssi',
-#             'reading_units': 'RSSI', 
-#             'period': '1', 
-#             'period_units': 'days',
-#             'precision': '1.0', 
-#             'accuracy': '0.1'
-#         }, {
-#             'pretty_name': 'Soil Moisture', 
-#             'endpoint': 'proto/sensor_droid/soil_moisture', 
-#             'reading_column_name': 'soil_moisture',
-#             'reading_units': 'percentage', 
-#             'period': '3', 
-#             'period_units': 'hours',
-#             'precision': '1.0', 
-#             'accuracy': '5.0'
-#         }, {
-#             'pretty_name': 'Soil Temperature', 
-#             'endpoint': 'proto/sensor_droid/soil_temperature', 
-#             'reading_column_name': 'soil_temperature',
-#             'reading_units': 'Celsius', 
-#             'period': '1', 
-#             'period_units': 'hours',
-#             'precision': '0.01', 
-#             'accuracy': '2.0'
-#         }, {
-#             'pretty_name': 'Ambient Temperature', 
-#             'endpoint': 'proto/sensor_droid/temperature', 
-#             'reading_column_name': 'temperature',
-#             'reading_units': 'Celsius', 
-#             'period': '30', 
-#             'period_units': 'minutes',
-#             'precision': '0.1', 
-#             'accuracy': '0.01'
-#         }, {
-#             'pretty_name': 'Ultraviolet Radiation', 
-#             'endpoint': 'proto/sensor_droid/uv', 
-#             'reading_column_name': 'uv_index',
-#             'reading_units': 'UV Index', 
-#             'period': '3', 
-#             'period_units': 'hours',
-#             'precision': '0.1', 
-#             'accuracy': '0.01'
-#         }]
-#     }
-# }
-
 import rp2040
 rp2040.startup()
 import board
