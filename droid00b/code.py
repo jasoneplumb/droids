@@ -3,7 +3,7 @@
 # TODO Add support for sensor specific sampling frequencies
 
 import json
-config_file = open('droid00b.json',)
+config_file = open('configuration.json',)
 config_data = json.load(config_file)
 config_file.close()
 for i in config_data['sensors']:

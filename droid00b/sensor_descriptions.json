@@ -1,0 +1,51 @@
+{
+    "sensors": [{
+        "pretty_name": "Relative Humidity", 
+        "endpoint": "proto/sensor_droid/relative_humidity", 
+        "reading_column_name": "relative_humidity",
+        "reading_units": "percentage", 
+        "period": 3, 
+        "period_units": "hours",
+        "bias": 0
+    }, {
+        "pretty_name": "Wi-Fi Signal Strength", 
+        "endpoint": "proto/sensor_droid/rssi", 
+        "reading_column_name": "rssi",
+        "reading_units": "RSSI", 
+        "period": 1, 
+        "period_units": "days",
+        "bias": 0
+    }, {
+        "pretty_name": "Soil Moisture", 
+        "endpoint": "proto/sensor_droid/soil_moisture", 
+        "reading_column_name": "soil_moisture",
+        "reading_units": "percentage", 
+        "period": 3, 
+        "period_units": "hours",
+        "bias": 0
+    }, {
+        "pretty_name": "Soil Temperature", 
+        "endpoint": "proto/sensor_droid/soil_temperature", 
+        "reading_column_name": "soil_temperature",
+        "reading_units": "Celsius", 
+        "period": 1, 
+        "period_units": "hours",
+        "bias": 0
+    }, {
+        "pretty_name": "Ambient Temperature", 
+        "endpoint": "proto/sensor_droid/temperature", 
+        "reading_column_name": "temperature",
+        "reading_units": "Celsius", 
+        "period": 30, 
+        "period_units": "minutes",
+        "bias": 0
+    }, {
+        "pretty_name": "Ultraviolet Radiation", 
+        "endpoint": "proto/sensor_droid/uv", 
+        "reading_column_name": "uv_index",
+        "reading_units": "UV Index", 
+        "period": 3, 
+        "period_units": "hours",
+        "bias": 0
+    }]
+}
