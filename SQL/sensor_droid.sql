@@ -30,6 +30,23 @@ CREATE TABLE IF NOT EXISTS droids (
         ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS sensor_description (
+	PRIMARY KEY (id),
+    id					INT					NOT NULL AUTO_INCREMENT UNIQUE,
+    pretty_name     	VARCHAR(256)		NOT NULL,
+    endpoint	 	    VARCHAR(128)		NOT NULL,
+    reading_column_name	VARCHAR(128)		NOT NULL,
+    period              INT                 NOT NULL,
+    period_units	 	VARCHAR(64)		    NOT NULL,
+    bias                FLOAT,
+	droid_fk			INT					NOT NULL,
+    create_ts	        TIMESTAMP 			NULL DEFAULT CURRENT_TIMESTAMP,
+    update_ts			TIMESTAMP			NULL ON UPDATE CURRENT_TIMESTAMP,
+	FOREIGN KEY (droid_fk)
+		REFERENCES droids(id)
+        ON UPDATE CASCADE ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS temperature (
 	PRIMARY KEY (id),
     id					INT					NOT NULL AUTO_INCREMENT UNIQUE,
