@@ -17,8 +17,11 @@ def Esp():
     while not esp.status == adafruit_esp32spi.WL_IDLE_STATUS:
         continue
     try:
-        from secrets import secrets    
-        esp.connect_AP(secrets['ssid'], secrets['password'])
+        import json
+        config_file = open('configuration.json')
+        config = json.load(config_file)
+        config_file.close()
+        esp.connect_AP(config['ssid'], config['password'])
     except Exception as error:
         print(str(error))
     np.deinit()

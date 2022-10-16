@@ -2,13 +2,6 @@
 # TODO factor out, as a function, the multi-pass try/catch pattern
 # TODO Add support for sensor specific sampling frequencies
 
-import json
-config_file = open('configuration.json',)
-config_data = json.load(config_file)
-config_file.close()
-for i in config_data['sensors']:
-    print(i['pretty_name'])
-
 import rp2040
 rp2040.startup()
 import board
@@ -42,15 +35,17 @@ if (esp != None):
     import adafruit_esp32spi.adafruit_esp32spi_socket as socket
     import adafruit_requests as requests
     requests.set_socket(socket, esp)
+    import json
+    config_file = open('configuration.json')
+    config = json.load(config_file)
+    config_file.close()
     def upload(sensor_group_name, sensor_name, sensor_value, ts):
         if (sensor_value == None):
             return
         # upload a new sample
-        from secrets import secrets    
-        json_data = \
-        {
-            "droid_fk": secrets['droid_fk'],
-            "time_ts": ts
+        json_data = {
+            "droid_fk": config['droid_fk'],
+            "sample_time": ts
         }
         json_data[sensor_name] = str(sensor_value)
         TABLES = "https://vcgtjqigra.execute-api.us-west-2.amazonaws.com/proto/sensor_droid"
