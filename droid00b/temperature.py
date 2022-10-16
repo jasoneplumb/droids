@@ -45,4 +45,4 @@ def Reading():
     return result
 
 def Units():
-    return 'Celcius'
+    return 'Celsius'
