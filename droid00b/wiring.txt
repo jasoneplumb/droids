@@ -23,8 +23,11 @@ UV Sensor -> RP2040 Feather
 Out -> A3
 + -> 3.3V
 
-am2320 Sensor -> RP2040 Feather
-1 -> 3.3V
-2 -> 11 (w/ 10kOhm pull up)
-3 -> GND
-4 -> 12 (w/ 10kOhm pull up)
+BME280 Sensor -> RP2040 Feather
+VIN -> (open)
+3Vo -> 3.3V
+GND -> GND
+SCK -> SCL
+SDO -> (open)
+SDI -> SDA
+CS -> (open)
