@@ -2,6 +2,13 @@
 # TODO factor out, as a function, the multi-pass try/catch pattern
 # TODO Add support for sensor specific sampling frequencies
 
+import json
+config_file = open('droid00b.json',)
+config_data = json.load(config_file)
+config_file.close()
+for i in config_data['sensors']:
+    print(i['pretty_name'])
+
 import rp2040
 rp2040.startup()
 import board
