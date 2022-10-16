@@ -13,7 +13,7 @@ Development System Setup
 1. Hold BootSel button and plug-in as USB drive mounted as RPI-RP2.
 2. Download the latest CircuitPython .uf2 bootloader (e.g., 7.3.2), and drag to the USB drive. Once it is finished it should automatically remount as CIRCUITPY.
 3. Copy the latest python scripts to the root of the CIRCUITPY device, replacing the default code.py script.
-4. Copy the latest secrets.py to the root of CIRCUITPY. Then edit the copy and specify your local access point (SSID) and password, etc.
+4. Copy the latest secrets.py to the root of CIRCUITPY. Then edit the copy and specify your local access point (SSID), password and the foreign key from the droids table in the SQL database.
 5. Download the https://github.com/adafruit/Adafruit_CircuitPython_Bundle/releases/download/20220727/adafruit-circuitpython-bundle-7.x-mpy-20220727.zip file, unzip it, and copy over the subfolders, such as lib, into the root of your CIRCUITPY device.
 6. "Eject" the CIRCUITPY (USB) device (e.g., Rt-Click on the device in the file explorer).
 7. Use Device Manager to determine which COM port the device is exposed as.
