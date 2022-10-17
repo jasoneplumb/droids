@@ -21,7 +21,7 @@ def Esp():
         config_file = open('configuration.json')
         config = json.load(config_file)
         config_file.close()
-        esp.connect_AP(config['ssid'], config['password'])
+        esp.connect_AP(config['ssid'], config['passcode'])
     except Exception as error:
         print(str(error))
     np.deinit()
