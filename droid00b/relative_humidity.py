@@ -1,4 +1,5 @@
 def Reading():
+    result = None
     USE_BME280 = True
     if (USE_BME280):
         from adafruit_bme280 import basic as adafruit_bme280
