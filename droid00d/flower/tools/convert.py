@@ -4,11 +4,11 @@ Converts images into a format suitable for display on Badger 2040.
 
 Optionally resizes images to 296x128 to fit the display.
 
-Crunches images down to dithered, 1bit colour depth.
+Crunches images down to dithered, 1bit color depth.
 
 Outputs either in raw binary format or as a .py file for embedding into MicroPython.
 
-Output to py functionality is borrwed from data_to_py.py, Copyright (c) 2016 Peter Hinch
+Output to py functionality is borrowed from data_to_py.py, Copyright (c) 2016 Peter Hinch
 """
 
 import io
@@ -34,6 +34,7 @@ parser.add_argument('--out_dir', type=Path, default=None, help='output directory
 parser.add_argument('--binary', action="store_true", help='output binary file for MicroPython')
 parser.add_argument('--py', action="store_true", help='output .py file for MicroPython embedding')
 parser.add_argument('--resize', action="store_true", help='force images to 296x128 pixels')
+parser.add_argument('--rotate', action="store_true", help='force image rotation 90 degrees counter-clockwise')
 
 options = parser.parse_args()
 
@@ -80,6 +81,8 @@ class ByteWriter(object):
 def convert_image(img):
     if options.resize:
         img = img.resize((296, 128))  # resize
+    if options.rotate:
+        img = img.rotate(90, Image.Dither.NONE, expand = 1)
     try:
         enhancer = ImageEnhance.Contrast(img)
         img = enhancer.enhance(2.0)
