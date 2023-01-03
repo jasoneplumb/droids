@@ -62,11 +62,11 @@ Projects
 
         3. Press F5 to save and run the program on the device.
    
-        Optionally, Upload (.bin) image files using flower/tools/convert.py. For example,
-
+        Optionally, Upload additional/new (.bin) image files after using flower/tools/convert.py. Ideally lossless png images are used.
+            <install python w/ pip>
             flower\tools>pip install Pillow
             flower\tools>python convert.py --binary --rotate ..\image\images\a\image2.jpeg
-            Saving to ..\image\images\a\image2.bin, 128x296
+            Saving to ..\image\images\a\image2.bin, 296x128
             flower\tools>
 
 <eof>
