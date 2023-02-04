@@ -8,7 +8,7 @@ import sys
 import time
 
 SIZE = 0.35
-SCALE_FACTOR = 0.7
+SCALE_FACTOR = 0.9
 TEXT_Y = badger2040.HEIGHT - 5
 PIXELS_PER_IMAGE = 37888 # equals 296 * 128
 BYTES_PER_IMAGE = int(PIXELS_PER_IMAGE / 8)
@@ -36,12 +36,14 @@ def BinFilesIn( path ): # returns an array of .bin files in the specified direct
 def ShowImages( a, b, c ): # image file names of the three portions
     display.pen(PEN_WHITE)
     display.clear()
-    # Concatenate image file base names as the name of the image
-    display.pen(BLACK)
-    NUM_EXT_CHARS = len('.bin')
-    display.text(a[:-NUM_EXT_CHARS], 0, TEXT_Y, SIZE) 
-    display.text(b[:-NUM_EXT_CHARS], int(display.measure_text(a, SIZE) * SCALE_FACTOR), TEXT_Y, SIZE)
-    display.text(c[:-NUM_EXT_CHARS], int(display.measure_text(a, SIZE) * SCALE_FACTOR) + int(display.measure_text(b, SIZE) * SCALE_FACTOR), TEXT_Y, SIZE)
+    RENDER_NAMES = False
+    if (RENDER_NAMES):
+        # Concatenate image file base names as the name of the image
+        display.pen(BLACK)
+        NUM_EXT_CHARS = len('.bin')
+        display.text(a[:-NUM_EXT_CHARS], 0, TEXT_Y, SIZE) 
+        display.text(b[:-NUM_EXT_CHARS], int(display.measure_text(a, SIZE) * SCALE_FACTOR), TEXT_Y, SIZE)
+        display.text(c[:-NUM_EXT_CHARS], int(display.measure_text(a, SIZE) * SCALE_FACTOR) + int(display.measure_text(b, SIZE) * SCALE_FACTOR), TEXT_Y, SIZE)
     display.update()
     # Compose and display the image data associated with the provided file names
     A_IMAGE = bytearray(BYTES_PER_IMAGE)
@@ -58,8 +60,11 @@ def ShowImages( a, b, c ): # image file names of the three portions
     display.image(COMPOSITE_IMAGE)
     # Saturation of the text (above) is best preseved by doing two partial updated at the higest rate.
     display.update_speed(badger2040.UPDATE_TURBO)
-    display.partial_update(0, 0, 296, 128 - 8) # - 8 leaves space for the name to not be overwritten/cleared
-    display.partial_update(0, 0, 296, 128 - 8) # - 8 leaves space for the name to not be overwritten/cleared
+    WIDTH = 128
+    if (RENDER_NAMES):
+        WIDTH -= 8 # leave space for the name to not be overwritten/cleared
+    display.partial_update(0, 0, 296, WIDTH) 
+    display.partial_update(0, 0, 296, WIDTH) 
     display.update_speed(badger2040.UPDATE_NORMAL)
     return
 
@@ -87,3 +92,4 @@ display.led(BLACK) # if no errors occur, clear the led and sleep
 SECONDS_PER_DAY = 86400 # equals 24h * 60m * 60s
 time.sleep(SECONDS_PER_DAY)
 machine.reset() # execution ends during this call and the program is restarted
+
