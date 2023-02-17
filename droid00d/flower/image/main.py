@@ -68,5 +68,5 @@ display = badger2040.Badger2040()
 ShowImages(A_PATH, B_PATH, C_PATH)
 display.update_speed(badger2040.UPDATE_NORMAL)
 display.update()
-time.sleep(5) # wait some number of seconds...
+time.sleep(43200) # wait some number of seconds (43200 = 12 hours)...
 machine.reset() # ...before restarting the device and program (does not return)
