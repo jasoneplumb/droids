@@ -34,28 +34,28 @@ Standard Deployment Setup
 
 Projects
 
-    The projects/hello-world/ directory contains a self-standing program that is designed to display text and sample buttons in a main loop. To install this project:
+    The hello-world/ directory contains a self-standing program that is designed to display text and sample buttons in a main loop. To install this project:
 
         1. Once connected, open the 'main.py' file on the root of the RP2040 device.
 
-        2. Replace the contents of this file with that of projects/hello-world/image/main.py.
+        2. Replace the contents of this file with that of hello-world/image/main.py.
 
         3. Press F5 to save and run the program on the device.
 
-    The projects/flower/ directory contains a self-standing program that is designed to display a random image daily, from each subdirectory of images.
+    The flower/ directory contains a self-standing program that is designed to display a random image daily, from each subdirectory of images.
 
-        1. Upload the image files in images/ into a matching directory structure on the device (i.e., images/a/, images/b/, images/c/):
+        1. Upload the image files in image/ into a matching directory structure on the device (i.e., top/, middle/, bottom/):
 
             a. Enable the Thonny Files pane using the View>File menu item.
             Note: If needed, the device (backend) can be restarted using Ctrl-F2 if the attached device isn't recognized in which case you may not see the My Computer or RP2040 Device selection dialog which precedes the standard file selection dialog. You can optionally also remove other files if they exist.
 
             b. Use the Thonny File View context menu to manually create a directory called 'images' in the filesystem root. You can optionally remove other directories if they exist.
             
-            c. Use the Thonny File View context menu to manually create three directories inside the images directory, called 'a', 'b' and 'c'.
+            c. Use the Thonny File View context menu to manually create three directories inside the images directory, called 'top', 'middle' and 'bottom'.
 
             d. Use the Thonny File View selection mechanism to navigate into each of these subdirectories, and then use the context menu to Upload any number of image (.bin) files the My Computer into these new directories on the device.
 
-        2. Replace the main.py file contents with /projects/flower/image/main.py.
+        2. Replace the main.py file contents with flower/image/main.py.
 
         3. Press F5 to save and run the program on the device.
    

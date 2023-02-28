@@ -9,7 +9,7 @@ import random
 import sys
 import time
 
-MIN_BATTERY_VOLTAGE = 2.2
+MIN_BATTERY_VOLTAGE = 2.3
 MAX_BATTERY_VOLTAGE = 3.7	
 # Starting point for LiPo battery is 3.2 - 4.0
 #MIN_BATTERY_VOLTAGE = 3.2
@@ -129,7 +129,6 @@ while True:
     vdd = 1.24 * (65535 / vref_adc.read_u16()) # Calculate the logic supply voltage
     vbat = vdd * 3 * vbat_adc.read_u16() / 65535 # 3 is gain
     vref_en.value(0) # Disable the onboard voltage reference
-    print("Measured battery at ", vbat, "v", sep="")
     level = int(map_value(vbat, MIN_BATTERY_VOLTAGE, MAX_BATTERY_VOLTAGE, 0, NUM_BATT_BARS))
     DrawBattery(level, NUM_BATT_BARS)
     TOP_IMAGES = BinFilesIn('top')
@@ -145,10 +144,13 @@ while True:
     BOTTOM_INDEX = random.randint(0,len(BOTTOM_IMAGES)-1)
     BOTTOM_PATH = BOTTOM_IMAGES[BOTTOM_INDEX]
     NAME = TOP_PATH[:-4] + MIDDLE_PATH[:-4] + BOTTOM_PATH[:-4]
-    ShowMessage(NAME)
-    display.update()
-    ShowImages(TOP_PATH, MIDDLE_PATH, BOTTOM_PATH)
-    display.partial_update(0, 0, 296, 120) # last value must be a multiple of 8
-    #display.halt() # press any key to advance to next pick (debugging only)
+#    print("Measured battery at ", vbat, "v", sep="") # debugging only
+#    ShowMessage(NAME) # Removed until names are updated and partial update is fixed
+    if (vbat > MIN_BATTERY_VOLTAGE):
+        display.partial_update(0, 120, 296, 8)
+        ShowImages(TOP_PATH, MIDDLE_PATH, BOTTOM_PATH)
+        display.partial_update(0, 0, 296, 120)
+    else:
+        display.update()
     time.sleep(43200) # 43200 = 12 hours * 60 minutes * 60 seconds
 
