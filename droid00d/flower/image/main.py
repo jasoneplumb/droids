@@ -9,7 +9,7 @@ import random
 import sys
 import time
 
-MIN_BATTERY_VOLTAGE = 2.3
+MIN_BATTERY_VOLTAGE = 2.4
 MAX_BATTERY_VOLTAGE = 3.7	
 # Starting point for LiPo battery is 3.2 - 4.0
 #MIN_BATTERY_VOLTAGE = 3.2
@@ -147,10 +147,10 @@ while True:
 #    print("Measured battery at ", vbat, "v", sep="") # debugging only
 #    ShowMessage(NAME) # Removed until names are updated and partial update is fixed
     if (vbat > MIN_BATTERY_VOLTAGE):
-        display.partial_update(0, 120, 296, 8)
+#        display.partial_update(0, 120, 296, 8)
         ShowImages(TOP_PATH, MIDDLE_PATH, BOTTOM_PATH)
-        display.partial_update(0, 0, 296, 120)
-    else:
-        display.update()
+#        display.partial_update(0, 0, 296, 120)
+#    else:
+    display.update()
     time.sleep(43200) # 43200 = 12 hours * 60 minutes * 60 seconds
 
