@@ -143,7 +143,7 @@ while True:
     if (len(BOTTOM_IMAGES) == 0): ShowErrorMessageAndExit('ERROR: No .bin files found in bottom/')
     BOTTOM_INDEX = random.randint(0,len(BOTTOM_IMAGES)-1)
     BOTTOM_PATH = BOTTOM_IMAGES[BOTTOM_INDEX]
-    NAME = TOP_PATH[:-4] + MIDDLE_PATH[:-4] + BOTTOM_PATH[:-4]
+#    NAME = TOP_PATH[:-4] + MIDDLE_PATH[:-4] + BOTTOM_PATH[:-4]
 #    print("Measured battery at ", vbat, "v", sep="") # debugging only
 #    ShowMessage(NAME) # Removed until names are updated and partial update is fixed
     if (vbat > MIN_BATTERY_VOLTAGE):
@@ -153,4 +153,3 @@ while True:
 #    else:
     display.update()
     time.sleep(43200) # 43200 = 12 hours * 60 minutes * 60 seconds
-
