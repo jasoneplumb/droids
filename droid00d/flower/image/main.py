@@ -20,7 +20,7 @@ MAX_BATTERY_VOLTAGE = 3.7
 
 WIDTH = badger2040.WIDTH
 HEIGHT = badger2040.HEIGHT
-BATT_HEIGHT = const(8) # Max thickness of 8 matches partial update accomodation (below)
+BATT_HEIGHT = const(8) # Max thickness of 8 matches partial update accommodation (below)
 BATT_WIDTH = const(32)
 TEXT_Y = HEIGHT - 5
 TEXT_X = BATT_WIDTH + 5
@@ -128,28 +128,27 @@ while True:
     vref_en.value(1) # Enable the onboard voltage reference
     vdd = 1.24 * (65535 / vref_adc.read_u16()) # Calculate the logic supply voltage
     vbat = vdd * 3 * vbat_adc.read_u16() / 65535 # 3 is gain
-    vref_en.value(0) # Disable the onboard voltage reference
     level = int(map_value(vbat, MIN_BATTERY_VOLTAGE, MAX_BATTERY_VOLTAGE, 0, NUM_BATT_BARS))
     DrawBattery(level, NUM_BATT_BARS)
-    TOP_IMAGES = BinFilesIn('top')
-    if (len(TOP_IMAGES) == 0): ShowErrorMessageAndExit('ERROR: No .bin files found in top/')
-    TOP_INDEX = random.randint(0,len(TOP_IMAGES)-1)
-    TOP_PATH = TOP_IMAGES[TOP_INDEX]
-    MIDDLE_IMAGES = BinFilesIn('middle')
-    if (len(MIDDLE_IMAGES) == 0): ShowErrorMessageAndExit('ERROR: No .bin files found in middle/')
-    MIDDLE_INDEX = random.randint(0,len(MIDDLE_IMAGES)-1)
-    MIDDLE_PATH = MIDDLE_IMAGES[MIDDLE_INDEX]
-    BOTTOM_IMAGES = BinFilesIn('bottom')
-    if (len(BOTTOM_IMAGES) == 0): ShowErrorMessageAndExit('ERROR: No .bin files found in bottom/')
-    BOTTOM_INDEX = random.randint(0,len(BOTTOM_IMAGES)-1)
-    BOTTOM_PATH = BOTTOM_IMAGES[BOTTOM_INDEX]
-#    NAME = TOP_PATH[:-4] + MIDDLE_PATH[:-4] + BOTTOM_PATH[:-4]
-#    print("Measured battery at ", vbat, "v", sep="") # debugging only
-#    ShowMessage(NAME) # Removed until names are updated and partial update is fixed
-    if (vbat > MIN_BATTERY_VOLTAGE):
-#        display.partial_update(0, 120, 296, 8)
-        ShowImages(TOP_PATH, MIDDLE_PATH, BOTTOM_PATH)
-#        display.partial_update(0, 0, 296, 120)
-#    else:
     display.update()
+    if (vbat > MIN_BATTERY_VOLTAGE):
+        vref_en.value(0) # Disable the onboard voltage reference
+        TOP_IMAGES = BinFilesIn('top')
+        if (len(TOP_IMAGES) == 0): ShowErrorMessageAndExit('ERROR: No .bin files found in top/')
+        TOP_INDEX = random.randint(0,len(TOP_IMAGES)-1)
+        TOP_PATH = TOP_IMAGES[TOP_INDEX]
+        MIDDLE_IMAGES = BinFilesIn('middle')
+        if (len(MIDDLE_IMAGES) == 0): ShowErrorMessageAndExit('ERROR: No .bin files found in middle/')
+        MIDDLE_INDEX = random.randint(0,len(MIDDLE_IMAGES)-1)
+        MIDDLE_PATH = MIDDLE_IMAGES[MIDDLE_INDEX]
+        BOTTOM_IMAGES = BinFilesIn('bottom')
+        if (len(BOTTOM_IMAGES) == 0): ShowErrorMessageAndExit('ERROR: No .bin files found in bottom/')
+        BOTTOM_INDEX = random.randint(0,len(BOTTOM_IMAGES)-1)
+        BOTTOM_PATH = BOTTOM_IMAGES[BOTTOM_INDEX]
+#    	NAME = TOP_PATH[:-4] + MIDDLE_PATH[:-4] + BOTTOM_PATH[:-4]
+#    	print("Measured battery at ", vbat, "v", sep="") # debugging only
+#    	ShowMessage(NAME) # Removed until names are updated and partial update is fixed
+        ShowImages(TOP_PATH, MIDDLE_PATH, BOTTOM_PATH)
+        display.update()
     time.sleep(43200) # 43200 = 12 hours * 60 minutes * 60 seconds
+
